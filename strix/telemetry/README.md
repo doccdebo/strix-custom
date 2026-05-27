@@ -25,12 +25,12 @@ We collect only very **basic** usage data including:
 - Vulnerability details, descriptions, or code
 - LLM requests and responses
 
-### How to Opt Out
+### Default and Opt-In
 
-Telemetry in Strix is entirely **optional**:
+Telemetry in this fork is disabled by default. To opt in explicitly:
 
 ```bash
-export STRIX_TELEMETRY=0
+export STRIX_TELEMETRY=1
 ```
 
-You can set this environment variable before running Strix to disable **all** telemetry.
+Set this environment variable before running Strix to enable telemetry.

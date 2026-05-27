@@ -1,4 +1,4 @@
-.PHONY: help install dev-install format lint type-check security check-all clean pre-commit setup-dev dev
+.PHONY: help install dev-install format lint type-check security check-all clean pre-commit setup-dev dev supply-chain-guard
 
 help:
 	@echo "Available commands:"
@@ -11,6 +11,7 @@ help:
 	@echo "  lint          - Lint code with ruff"
 	@echo "  type-check    - Run type checking with mypy and pyright"
 	@echo "  security      - Run security checks with bandit"
+	@echo "  supply-chain-guard - Detect supply-chain anti-patterns"
 	@echo "  check-all     - Run all code quality checks"
 	@echo ""
 	@echo "Development:"
@@ -49,6 +50,11 @@ security:
 	@echo "🔒 Running security checks with bandit..."
 	uv run bandit -r strix/ -c pyproject.toml
 	@echo "✅ Security checks complete!"
+
+supply-chain-guard:
+	@echo "🔒 Running supply-chain guardrail..."
+	python3 scripts/check_supply_chain.py
+	@echo "✅ Supply-chain guardrail complete!"
 
 check-all: format lint type-check security
 	@echo "✅ All code quality checks passed!"

@@ -91,6 +91,9 @@ strix --target ./app-directory
 > [!NOTE]
 > First run automatically pulls the sandbox Docker image. Results are saved to `strix_runs/<run-name>`
 
+> [!IMPORTANT]
+> This fork is private-default hardened: telemetry is off by default, external web search requires explicit opt-in (`STRIX_ENABLE_EXTERNAL_WEB_SEARCH=1`), and public/external LLM usage requires explicit opt-in (`STRIX_ALLOW_PUBLIC_LLM=1`).
+
 ---
 
 ## ☁️ Strix Platform
@@ -230,7 +233,11 @@ export LLM_API_KEY="your-api-key"
 
 # Optional
 export LLM_API_BASE="your-api-base-url"  # if using a local model, e.g. Ollama, LMStudio
-export PERPLEXITY_API_KEY="your-api-key"  # for search capabilities
+export STRIX_ENABLE_EXTERNAL_WEB_SEARCH="1"  # explicit opt-in for external Perplexity search
+export PERPLEXITY_API_KEY="your-api-key"  # only used when STRIX_ENABLE_EXTERNAL_WEB_SEARCH=1
+export STRIX_ALLOW_PUBLIC_LLM="1"  # required to allow public/external LLM endpoints in private mode
+export STRIX_TELEMETRY="1"  # telemetry opt-in
+export STRIX_IMAGE="registry.internal/strix-sandbox@sha256:<digest>"  # recommended for mirrored/pinned sandbox images
 export STRIX_REASONING_EFFORT="high"  # control thinking effort (default: high, quick scan: medium)
 ```
 
@@ -244,6 +251,8 @@ export STRIX_REASONING_EFFORT="high"  # control thinking effort (default: high, 
 - [Google Gemini 3 Pro Preview](https://cloud.google.com/vertex-ai) — `vertex_ai/gemini-3-pro-preview`
 
 See the [LLM Providers documentation](https://docs.strix.ai/llm-providers/overview) for all supported providers including Vertex AI, Bedrock, Azure, and local models.
+
+For enterprise-safe defaults and operator guidance, see [`docs/security-hardening.mdx`](docs/security-hardening.mdx). You can also run `make supply-chain-guard` to detect common supply-chain anti-patterns in build/automation files.
 
 ## Enterprise
 

@@ -1,0 +1,90 @@
+---
+title: "Security Hardening"
+description: "Private-default operating guidance for Strix"
+---
+
+## Private-Default Behavior
+
+- `STRIX_TELEMETRY` is **disabled by default**.
+- External web search is **disabled by default**, even when `PERPLEXITY_API_KEY` is set.
+  - Explicit opt-in: `STRIX_ENABLE_EXTERNAL_WEB_SEARCH=1`
+- Private mode is **enabled by default** (`STRIX_PRIVATE_MODE=1`).
+  - Public/external LLM providers are blocked unless explicitly allowed.
+  - Explicit opt-in: `STRIX_ALLOW_PUBLIC_LLM=1`
+
+## Telemetry Opt-In
+
+Enable telemetry only when approved:
+
+```bash
+export STRIX_TELEMETRY=1
+```
+
+## External Web Search Opt-In
+
+```bash
+export STRIX_ENABLE_EXTERNAL_WEB_SEARCH=1
+export PERPLEXITY_API_KEY="pplx-..."
+```
+
+If disabled, `web_search` returns a safe message instructing the operator to set `STRIX_ENABLE_EXTERNAL_WEB_SEARCH=1`.
+
+## Recommended LLM Configuration
+
+Prefer local/private endpoints:
+
+```bash
+export STRIX_LLM="openai/gpt-5.4"
+export LLM_API_BASE="http://localhost:11434"
+```
+
+For internal gateways, use your internal hostname or private IP in `LLM_API_BASE`.
+
+If you intentionally use public/external providers, explicitly acknowledge data egress risk:
+
+```bash
+export STRIX_ALLOW_PUBLIC_LLM=1
+```
+
+## Egress Allowlist Guidance
+
+For enterprise/private runs, allow only business-approved targets and internal infrastructure. Block by default and explicitly review required destinations.
+
+Recommended blocked endpoints unless approved:
+
+- PostHog (`us.i.posthog.com`)
+- Scarf (`strix.gateway.scarf.sh`)
+- Perplexity (`api.perplexity.ai`)
+- Public LLM APIs (OpenAI/Anthropic/OpenRouter/etc.)
+- Package registries during runtime scans
+- Cloud metadata endpoints (`169.254.169.254`, provider equivalents)
+
+## Sandbox Image Mirroring and Pinning
+
+Set `STRIX_IMAGE` to your mirrored internal image, ideally pinned by digest:
+
+```bash
+export STRIX_IMAGE="registry.internal/sec/strix-sandbox@sha256:<digest>"
+```
+
+## Artifact Handling
+
+Treat these locations as sensitive scan artifacts:
+
+- `strix_runs/` (events, run metadata, reports, screenshots, logs)
+- `~/.strix/` (local config and runtime state)
+- In-container Caido data and exports
+- Generated screenshots and evidence files
+- CLI/TUI scan logs
+
+Apply your organization’s retention, encryption, and access-control policies.
+
+## Supply-Chain Guardrail
+
+Run the repository guardrail locally:
+
+```bash
+make supply-chain-guard
+```
+
+It flags obvious anti-patterns (`:latest`, `@latest`, `curl|sh`, `releases/latest`, and unpinned `git clone`) in high-risk build/automation files.

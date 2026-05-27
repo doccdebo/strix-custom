@@ -1359,7 +1359,7 @@ class StrixTUIApp(App):  # type: ignore[misc]
 
                 try:
                     if not self._scan_stop_event.is_set():
-                        image = load_settings().runtime.image or "strix-sandbox:latest"
+                        image = load_settings().runtime.image or "ghcr.io/usestrix/strix-sandbox:1.0.0"
                         loop.run_until_complete(
                             run_strix_scan(
                                 scan_config=self.scan_config,
