@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import os
+import logging
+from ipaddress import ip_address
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from agents import set_default_openai_api, set_default_openai_key
 from agents.retry import (
@@ -18,6 +21,22 @@ if TYPE_CHECKING:
 
 
 _SDK_PREFIXES = {"any-llm", "litellm", "openai"}
+_PUBLIC_MODEL_PREFIXES = {
+    "anthropic/",
+    "azure/",
+    "bedrock/",
+    "deepseek/",
+    "gemini/",
+    "groq/",
+    "mistral/",
+    "novita/",
+    "openai/",
+    "openrouter/",
+    "vertex",
+    "vertex_ai/",
+    "xai/",
+}
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_MODEL_RETRY = ModelRetrySettings(
@@ -44,6 +63,7 @@ def configure_sdk_model_defaults(settings: Settings) -> None:
     ``any-llm/`` routing, produced by :func:`normalize_model_name`.
     """
     llm = settings.llm
+    _enforce_private_llm_defaults(settings)
     _configure_litellm_compatibility()
     if llm.api_key:
         set_default_openai_key(llm.api_key, use_for_tracing=False)
@@ -54,6 +74,57 @@ def configure_sdk_model_defaults(settings: Settings) -> None:
         set_default_openai_api("chat_completions")
     else:
         set_default_openai_api("responses")
+
+
+def _enforce_private_llm_defaults(settings: Settings) -> None:
+    llm = settings.llm
+    if not settings.security.private_mode:
+        return
+
+    resolved_model = normalize_model_name(llm.model or "")
+    public_api_base = _is_public_api_base(llm.api_base)
+    public_model_route = _is_public_model_route(resolved_model)
+    external_usage = public_api_base if llm.api_base else public_model_route
+
+    if external_usage and not llm.allow_public_endpoints:
+        raise RuntimeError(
+            "Strix private mode blocked external/public LLM usage. "
+            "Set STRIX_ALLOW_PUBLIC_LLM=1 only if you deliberately permit egress to this provider.",
+        )
+    if external_usage and llm.allow_public_endpoints:
+        logger.warning(
+            "Public/external LLM endpoint explicitly enabled via STRIX_ALLOW_PUBLIC_LLM=1; "
+            "prompts and scan metadata may leave your environment",
+        )
+
+
+def _is_public_api_base(api_base: str | None) -> bool:
+    if not api_base:
+        return False
+    parsed = urlparse(api_base)
+    host = (parsed.hostname or "").strip().lower()
+    if not host:
+        return False
+    if host in {"localhost", "host.docker.internal"}:
+        return False
+    if host.endswith((".local", ".internal", ".corp", ".lan")):
+        return False
+    try:
+        ip = ip_address(host)
+    except ValueError:
+        return True
+    return not (
+        ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_unspecified
+    )
+
+
+def _is_public_model_route(model_name: str) -> bool:
+    model = model_name.strip().lower()
+    if not model:
+        return False
+    if model.startswith(("local/", "ollama/", "lmstudio/", "vllm/", "any-llm/")):
+        return False
+    return model.startswith(tuple(_PUBLIC_MODEL_PREFIXES))
 
 
 def _configure_litellm_compatibility() -> None:

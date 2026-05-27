@@ -74,8 +74,10 @@ def validate_environment() -> None:
     if not settings.llm.api_base:
         missing_optional_vars.append("LLM_API_BASE")
 
-    if not settings.integrations.perplexity_api_key:
+    if settings.integrations.enable_external_web_search and not settings.integrations.perplexity_api_key:
         missing_optional_vars.append("PERPLEXITY_API_KEY")
+    if not settings.integrations.enable_external_web_search:
+        missing_optional_vars.append("STRIX_ENABLE_EXTERNAL_WEB_SEARCH")
 
     if missing_required_vars:
         error_text = Text()
@@ -124,7 +126,14 @@ def validate_environment() -> None:
                     error_text.append("• ", style="white")
                     error_text.append("PERPLEXITY_API_KEY", style="bold cyan")
                     error_text.append(
-                        " - API key for Perplexity AI web search (enables real-time research)\n",
+                        " - API key for Perplexity AI web search (requires explicit opt-in)\n",
+                        style="white",
+                    )
+                elif var == "STRIX_ENABLE_EXTERNAL_WEB_SEARCH":
+                    error_text.append("• ", style="white")
+                    error_text.append("STRIX_ENABLE_EXTERNAL_WEB_SEARCH", style="bold cyan")
+                    error_text.append(
+                        " - Set to 1 to explicitly enable external Perplexity web search\n",
                         style="white",
                     )
                 elif var == "STRIX_REASONING_EFFORT":
@@ -156,6 +165,11 @@ def validate_environment() -> None:
                 elif var == "PERPLEXITY_API_KEY":
                     error_text.append(
                         "export PERPLEXITY_API_KEY='your-perplexity-key-here'\n", style="dim white"
+                    )
+                elif var == "STRIX_ENABLE_EXTERNAL_WEB_SEARCH":
+                    error_text.append(
+                        "export STRIX_ENABLE_EXTERNAL_WEB_SEARCH='1'  # opt in to external web search\n",
+                        style="dim white",
                     )
                 elif var == "STRIX_REASONING_EFFORT":
                     error_text.append(

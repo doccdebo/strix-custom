@@ -45,7 +45,18 @@ def _do_search(query: str) -> dict[str, Any]:  # noqa: PLR0911 - each error clas
     if not query or not query.strip():
         return {"success": False, "error": "Query cannot be empty"}
 
-    api_key = load_settings().integrations.perplexity_api_key
+    settings = load_settings()
+    if not settings.integrations.enable_external_web_search:
+        logger.warning("web_search blocked; STRIX_ENABLE_EXTERNAL_WEB_SEARCH is not enabled")
+        return {
+            "success": False,
+            "error": (
+                "External web search is disabled by default in private mode. "
+                "Set STRIX_ENABLE_EXTERNAL_WEB_SEARCH=1 to opt in, then retry"
+            ),
+        }
+
+    api_key = settings.integrations.perplexity_api_key
     if not api_key:
         logger.warning("web_search invoked without PERPLEXITY_API_KEY configured")
         return {

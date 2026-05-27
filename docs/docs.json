@@ -63,6 +63,7 @@
             "group": "Advanced",
             "pages": [
               "advanced/configuration",
+              "security-hardening",
               "advanced/skills",
               "contributing"
             ]

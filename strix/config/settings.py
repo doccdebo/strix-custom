@@ -37,6 +37,7 @@ class LlmSettings(BaseSettings):
     )
     reasoning_effort: ReasoningEffort = Field(default="high", alias="STRIX_REASONING_EFFORT")
     timeout: int = Field(default=300, alias="LLM_TIMEOUT")
+    allow_public_endpoints: bool = Field(default=False, alias="STRIX_ALLOW_PUBLIC_LLM")
 
 
 class RuntimeSettings(BaseSettings):
@@ -52,13 +53,23 @@ class RuntimeSettings(BaseSettings):
 class TelemetrySettings(BaseSettings):
     model_config = _BASE_CONFIG
 
-    enabled: bool = Field(default=True, alias="STRIX_TELEMETRY")
+    enabled: bool = Field(default=False, alias="STRIX_TELEMETRY")
 
 
 class IntegrationSettings(BaseSettings):
     model_config = _BASE_CONFIG
 
     perplexity_api_key: str | None = Field(default=None, alias="PERPLEXITY_API_KEY")
+    enable_external_web_search: bool = Field(
+        default=False,
+        alias="STRIX_ENABLE_EXTERNAL_WEB_SEARCH",
+    )
+
+
+class SecuritySettings(BaseSettings):
+    model_config = _BASE_CONFIG
+
+    private_mode: bool = Field(default=True, alias="STRIX_PRIVATE_MODE")
 
 
 class Settings(BaseSettings):
@@ -68,3 +79,4 @@ class Settings(BaseSettings):
     runtime: RuntimeSettings = Field(default_factory=RuntimeSettings)
     telemetry: TelemetrySettings = Field(default_factory=TelemetrySettings)
     integrations: IntegrationSettings = Field(default_factory=IntegrationSettings)
+    security: SecuritySettings = Field(default_factory=SecuritySettings)
