@@ -74,7 +74,10 @@ def validate_environment() -> None:
     if not settings.llm.api_base:
         missing_optional_vars.append("LLM_API_BASE")
 
-    if settings.integrations.enable_external_web_search and not settings.integrations.perplexity_api_key:
+    if (
+        settings.integrations.enable_external_web_search
+        and not settings.integrations.perplexity_api_key
+    ):
         missing_optional_vars.append("PERPLEXITY_API_KEY")
     if not settings.integrations.enable_external_web_search:
         missing_optional_vars.append("STRIX_ENABLE_EXTERNAL_WEB_SEARCH")
@@ -168,7 +171,8 @@ def validate_environment() -> None:
                     )
                 elif var == "STRIX_ENABLE_EXTERNAL_WEB_SEARCH":
                     error_text.append(
-                        "export STRIX_ENABLE_EXTERNAL_WEB_SEARCH='1'  # opt in to external web search\n",
+                        "export STRIX_ENABLE_EXTERNAL_WEB_SEARCH='1'  "
+                        "# opt in to external web search\n",
                         style="dim white",
                     )
                 elif var == "STRIX_REASONING_EFFORT":

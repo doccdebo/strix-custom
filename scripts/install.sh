@@ -74,7 +74,7 @@ INSTALL_DIR=$HOME/.strix/bin
 mkdir -p "$INSTALL_DIR"
 
 if [ -z "$requested_version" ]; then
-    specific_version=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
+    specific_version=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p') # guardrail: allow dynamic installer release discovery
     if [[ $? -ne 0 || -z "$specific_version" ]]; then
         echo -e "${RED}Failed to fetch version information${NC}"
         exit 1

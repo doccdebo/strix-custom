@@ -55,15 +55,15 @@ def main() -> int:
                 violations.append(f"{rel}:{line_no}: possibly unpinned git clone: {line.strip()}")
 
     if violations:
-        print("Supply-chain guardrail violations found:\n")
-        print("\n".join(violations))
-        print(
+        sys.stderr.write("Supply-chain guardrail violations found:\n\n")
+        sys.stderr.write("\n".join(violations))
+        sys.stderr.write(
             "\nIf a line is intentionally allowed, add an inline comment containing "
-            f"'{ALLOWLIST_MARKER}'.",
+            f"'{ALLOWLIST_MARKER}'.\n",
         )
         return 1
 
-    print("Supply-chain guardrail passed.")
+    sys.stdout.write("Supply-chain guardrail passed.\n")
     return 0
 
 

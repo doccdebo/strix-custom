@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 from ipaddress import ip_address
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
