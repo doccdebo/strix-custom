@@ -744,11 +744,6 @@ class StrixTUIApp(App):  # type: ignore[misc]
             "scope_mode": getattr(args, "scope_mode", "auto"),
             "diff_base": getattr(args, "diff_base", None),
             "resume_instruction": getattr(args, "user_explicit_instruction", None) or "",
-            "enable_interactive_login": bool(
-                getattr(args, "enable_interactive_login", False)
-            ),
-            "browser": getattr(args, "browser", "auto"),
-            "login_timeout": int(getattr(args, "login_timeout", 300)),
         }
 
     def _setup_cleanup_handlers(self) -> None:

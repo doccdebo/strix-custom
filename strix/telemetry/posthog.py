@@ -10,7 +10,6 @@ from strix.telemetry._common import (
     base_props,
     is_first_run,
 )
-from strix.telemetry.logging import normalize_usage_value
 
 
 if TYPE_CHECKING:
@@ -21,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 _POSTHOG_PUBLIC_API_KEY = "phc_7rO3XRuNT5sgSKAl6HDIrWdSGh1COzxw0vxVIAR6vVZ"
 _POSTHOG_HOST = "https://us.i.posthog.com"
-_MISSING_TOKEN_WARNING_EMITTED = False
 
 
 def _is_enabled() -> bool:
@@ -84,7 +82,6 @@ def finding(severity: str) -> None:
 
 
 def end(report_state: "ReportState", exit_reason: str = "completed") -> None:
-    global _MISSING_TOKEN_WARNING_EMITTED
     vulnerabilities_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
     for v in report_state.vulnerability_reports:
         sev = v.get("severity", "info").lower()
@@ -103,19 +100,11 @@ def end(report_state: "ReportState", exit_reason: str = "completed") -> None:
     try:
         usage = report_state.get_total_llm_usage()
         if isinstance(usage, dict):
-            missing_tokens = any(
-                usage.get(key) is None for key in ("input_tokens", "output_tokens", "total_tokens")
-            )
-            if missing_tokens and not _MISSING_TOKEN_WARNING_EMITTED:
-                logger.warning(
-                    "Token usage information is missing from the LLM response; telemetry continues with zeros",
-                )
-                _MISSING_TOKEN_WARNING_EMITTED = True
             llm_props = {
-                "llm_requests": normalize_usage_value(usage.get("requests")),
-                "llm_input_tokens": normalize_usage_value(usage.get("input_tokens")),
-                "llm_output_tokens": normalize_usage_value(usage.get("output_tokens")),
-                "llm_tokens": normalize_usage_value(usage.get("total_tokens")),
+                "llm_requests": int(usage.get("requests") or 0),
+                "llm_input_tokens": int(usage.get("input_tokens") or 0),
+                "llm_output_tokens": int(usage.get("output_tokens") or 0),
+                "llm_tokens": int(usage.get("total_tokens") or 0),
                 "llm_cost": float(usage.get("cost") or 0.0),
             }
     except (TypeError, ValueError, AttributeError):

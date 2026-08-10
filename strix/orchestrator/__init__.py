@@ -1,1 +1,0 @@
-"""Strix orchestrator package."""

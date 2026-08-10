@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING, cast
-from weakref import WeakKeyDictionary
 
 from agents.memory import SQLiteSession
 
@@ -19,18 +17,6 @@ if TYPE_CHECKING:
 def open_agent_session(agent_id: str, path: Path) -> SQLiteSession:
     path.parent.mkdir(parents=True, exist_ok=True)
     return SQLiteSession(session_id=agent_id, db_path=path)
-
-
-_session_write_locks: WeakKeyDictionary[Session, asyncio.Lock] = WeakKeyDictionary()
-
-
-def session_write_lock(session: Session) -> asyncio.Lock:
-    """Lock serialising all out-of-band writes to ``session``."""
-    lock = _session_write_locks.get(session)
-    if lock is None:
-        lock = asyncio.Lock()
-        _session_write_locks[session] = lock
-    return lock
 
 
 _IMAGE_REJECTED_TEXT = "[image rejected by the model]"

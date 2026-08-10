@@ -141,11 +141,3 @@ def setup_scan_logging(run_dir: Path, *, debug: bool | None = None) -> Callable[
                         handler.close()
 
     return _teardown
-
-
-def normalize_usage_value(value: object) -> int:
-    """Return a safe integer counter for telemetry usage properties."""
-    try:
-        return max(0, int(value or 0))
-    except (TypeError, ValueError):
-        return 0
