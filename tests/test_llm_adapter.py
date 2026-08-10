@@ -6,6 +6,8 @@ import os
 import unittest
 from unittest.mock import patch
 
+from agents.usage import InputTokensDetails, OutputTokensDetails, Usage
+
 from strix.config.models import configure_sdk_model_defaults
 from strix.config.settings import BudgetSettings, LlmSettings, SecuritySettings, Settings
 from strix.llm.local_adapter import is_local_endpoint
@@ -99,6 +101,25 @@ class TestSdkModelDefaults(unittest.TestCase):
             "https://gateway.internal.corp/openai",
         )
         mock_set_default_openai_api.assert_called_once_with("chat_completions")
+
+    @patch("strix.config.models._configure_litellm_compatibility")
+    def test_default_settings_coerce_null_usage_tokens(self, mock_configure_litellm_compatibility) -> None:
+        del mock_configure_litellm_compatibility
+        settings = make_settings(model="openai/gpt-4")
+        configure_sdk_model_defaults(settings)
+
+        usage = Usage(
+            requests=1,
+            input_tokens=None,  # type: ignore[arg-type]
+            output_tokens=None,  # type: ignore[arg-type]
+            total_tokens=None,  # type: ignore[arg-type]
+            input_tokens_details=InputTokensDetails(cache_write_tokens=0, cached_tokens=0),
+            output_tokens_details=OutputTokensDetails(reasoning_tokens=0),
+        )
+
+        self.assertEqual(usage.input_tokens, 0)
+        self.assertEqual(usage.output_tokens, 0)
+        self.assertEqual(usage.total_tokens, 0)
 
 
 if __name__ == "__main__":

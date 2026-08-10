@@ -38,6 +38,7 @@ class LlmSettings(BaseSettings):
     reasoning_effort: ReasoningEffort = Field(default="high", alias="STRIX_REASONING_EFFORT")
     timeout: int = Field(default=300, alias="LLM_TIMEOUT")
     allow_public_endpoints: bool = Field(default=False, alias="STRIX_ALLOW_PUBLIC_LLM")
+    ignore_missing_tokens: bool = Field(default=True, alias="STRIX_IGNORE_MISSING_TOKENS")
 
 
 class RuntimeSettings(BaseSettings):

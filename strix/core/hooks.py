@@ -24,6 +24,7 @@ class ReportUsageHooks(RunHooks[dict[str, Any]]):
 
     def __init__(self, *, model: str) -> None:
         self._model = model
+        self._missing_usage_warned = False
 
     async def on_llm_end(
         self,
@@ -44,11 +45,17 @@ class ReportUsageHooks(RunHooks[dict[str, Any]]):
             agent_id = agent_name or "unknown"
 
         try:
+            usage = getattr(response, "usage", None)
+            if usage is None and not self._missing_usage_warned:
+                logger.warning(
+                    "LLM response usage is missing; continuing without token tracking for this response",
+                )
+                self._missing_usage_warned = True
             report_state.record_sdk_usage(
                 agent_id=agent_id,
                 agent_name=agent_name,
                 model=self._model,
-                usage=response.usage,
+                usage=usage,
             )
         except Exception:
             logger.exception("failed to record SDK usage for agent %s", agent_id)
