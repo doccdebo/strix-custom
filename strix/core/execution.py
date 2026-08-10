@@ -480,7 +480,7 @@ async def _append_noninteractive_tool_required_message(
         "That is invalid in non-interactive mode; plain text final answers are ignored. "
         "Continue immediately and call exactly one tool. "
         f"If your work is complete, call {finish_tool}. "
-        "If you are blocked waiting for another agent, call wait_for_message. "
+        "If you are blocked waiting for another agent, call wait_for_agents. "
         "Otherwise use the appropriate execution or planning tool. "
         f"This is recovery attempt {attempt}/{limit}."
     )
@@ -492,30 +492,61 @@ async def _append_noninteractive_tool_required_message(
     return []
 
 
-async def _notify_parent_on_crash(
+_TERMINAL_NOTICE = {
+    "completed": (
+        "[Agent completed] {name} ({agent_id}) finished and is no longer running, but it "
+        "sent no completion report. Stop waiting on this child; ask it directly if you "
+        "need its results."
+    ),
+    "crashed": (
+        "[Agent crash] {name} ({agent_id}) terminated unexpectedly. "
+        "Stop waiting on this child unless you want to message it again."
+    ),
+    "failed": (
+        "[Agent failed] {name} ({agent_id}) stopped with an error and will not "
+        "send a completion report. Stop waiting on this child unless you want to "
+        "message it again."
+    ),
+    "stopped": (
+        "[Agent stopped] {name} ({agent_id}) was stopped before finishing (turn limit "
+        "or an explicit stop). It will not send a completion report, so stop waiting "
+        "on this child; account for its unfinished subtask and continue."
+    ),
+}
+
+
+async def notify_parent_on_terminal(
     coordinator: AgentCoordinator,
     agent_id: str,
     status: str,
 ) -> None:
-    if status != "crashed":
+    template = _TERMINAL_NOTICE.get(status)
+    if template is None:
         return
     async with coordinator._lock:
         parent = coordinator.parent_of.get(agent_id)
         name = coordinator.names.get(agent_id, agent_id)
     if parent is None:
         return
+    if not await coordinator.claim_parent_notice(agent_id):
+        return
     await coordinator.send(
         parent,
         {
             "from": agent_id,
-            "type": "crash",
+            "type": status,
             "priority": "high",
-            "content": (
-                f"[Agent crash] {name} ({agent_id}) terminated unexpectedly. "
-                "Stop waiting on this child unless you want to message it again."
-            ),
+            "content": template.format(name=name, agent_id=agent_id),
         },
     )
+
+
+async def _notify_parent_on_crash(
+    coordinator: AgentCoordinator,
+    agent_id: str,
+    status: str,
+) -> None:
+    await notify_parent_on_terminal(coordinator, agent_id, status)
 
 
 async def _start_child_runner(
