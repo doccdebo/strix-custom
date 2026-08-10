@@ -38,7 +38,6 @@ class LlmSettings(BaseSettings):
     reasoning_effort: ReasoningEffort = Field(default="high", alias="STRIX_REASONING_EFFORT")
     timeout: int = Field(default=300, alias="LLM_TIMEOUT")
     allow_public_endpoints: bool = Field(default=False, alias="STRIX_ALLOW_PUBLIC_LLM")
-    ignore_missing_tokens: bool = Field(default=True, alias="STRIX_IGNORE_MISSING_TOKENS")
 
 
 class RuntimeSettings(BaseSettings):
@@ -81,29 +80,6 @@ class SecuritySettings(BaseSettings):
     private_mode: bool = Field(default=True, alias="STRIX_PRIVATE_MODE")
 
 
-class BudgetSettings(BaseSettings):
-    """Cost-reduction and local-execution controls."""
-
-    model_config = _BASE_CONFIG
-
-    max_workers: int = Field(default=1, alias="STRIX_MAX_WORKERS")
-    enable_local_mode: bool = Field(default=False, alias="STRIX_ENABLE_LOCAL_MODE")
-    smart_truncate: bool = Field(default=True, alias="STRIX_SMART_TRUNCATE")
-    escalation_endpoint: str | None = Field(default=None, alias="STRIX_ESCALATION_ENDPOINT")
-
-
-class InteractiveLoginSettings(BaseSettings):
-    """Settings for the interactive browser-based login feature."""
-
-    model_config = _BASE_CONFIG
-
-    enabled: bool = Field(default=False, alias="STRIX_INTERACTIVE_LOGIN")
-    browser: str = Field(default="auto", alias="STRIX_BROWSER")
-    timeout: int = Field(default=300, alias="STRIX_LOGIN_TIMEOUT")
-    proxy_port: int = Field(default=8888, alias="STRIX_LOGIN_PROXY_PORT")
-    skip_browser_cleanup: bool = Field(default=False, alias="STRIX_KEEP_BROWSER")
-
-
 class Settings(BaseSettings):
     model_config = _BASE_CONFIG
 
@@ -113,7 +89,3 @@ class Settings(BaseSettings):
     integrations: IntegrationSettings = Field(default_factory=IntegrationSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     mobsf: MobSFSettings = Field(default_factory=MobSFSettings)
-    budget: BudgetSettings = Field(default_factory=BudgetSettings)
-    interactive_login: InteractiveLoginSettings = Field(
-        default_factory=InteractiveLoginSettings
-    )

@@ -63,18 +63,14 @@ def configure_sdk_model_defaults(settings: Settings) -> None:
     ``any-llm/`` routing, produced by :func:`normalize_model_name`.
     """
     llm = settings.llm
-    if llm.ignore_missing_tokens:
-        _enable_null_token_usage_fallback()
     _enforce_private_llm_defaults(settings)
     _configure_litellm_compatibility()
-    api_base = (llm.api_base or "").strip()
     if llm.api_key:
         set_default_openai_key(llm.api_key, use_for_tracing=False)
         _configure_litellm_default("api_key", llm.api_key)
-    if api_base:
-        os.environ["OPENAI_BASE_URL"] = api_base
-        _configure_litellm_default("api_base", api_base)
-        logger.info("Configured custom OpenAI-compatible api_base: %s", api_base)
+    if llm.api_base:
+        os.environ["OPENAI_BASE_URL"] = llm.api_base
+        _configure_litellm_default("api_base", llm.api_base)
         set_default_openai_api("chat_completions")
     else:
         set_default_openai_api("responses")
@@ -144,39 +140,6 @@ def _configure_litellm_default(name: str, value: str) -> None:
     import litellm
 
     setattr(litellm, name, value)
-
-
-def _enable_null_token_usage_fallback() -> None:
-    """Patch SDK usage constructors to coerce null token counters to zero."""
-    from agents import usage as agents_usage
-
-    if getattr(agents_usage.Usage, "__strix_missing_tokens_patched__", False):
-        return
-
-    agents_usage.Usage.__init__ = _wrap_nullable_token_init(  # type: ignore[method-assign]
-        agents_usage.Usage.__init__,
-        ("requests", "input_tokens", "output_tokens", "total_tokens"),
-    )
-    agents_usage.RequestUsage.__init__ = _wrap_nullable_token_init(  # type: ignore[method-assign]
-        agents_usage.RequestUsage.__init__,
-        ("input_tokens", "output_tokens", "total_tokens"),
-    )
-    setattr(agents_usage.Usage, "__strix_missing_tokens_patched__", True)
-    logger.info("Enabled tolerant token-usage parsing for null values")
-
-
-def _wrap_nullable_token_init(original_init: object, fields: tuple[str, ...]) -> object:
-    def _patched_init(self: object, *args: object, **kwargs: object) -> object:
-        patched_args = list(args)
-        for idx, arg in enumerate(patched_args[: len(fields)]):
-            if arg is None:
-                patched_args[idx] = 0
-        for name in fields:
-            if kwargs.get(name) is None:
-                kwargs[name] = 0
-        return original_init(self, *patched_args, **kwargs)  # type: ignore[misc]
-
-    return _patched_init
 
 
 def normalize_model_name(model_name: str) -> str:
