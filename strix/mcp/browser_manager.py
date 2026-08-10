@@ -210,21 +210,23 @@ class BrowserManager:
         remote_debugging_port: int,
     ) -> subprocess.Popen[bytes]:
         """Build the command line and start the browser process."""
-        proxy_arg = f"127.0.0.1:{self._proxy_port}"
+        firefox_env: dict[str, str] | None = None
 
         if info.name in ("chrome", "edge"):
             cmd = [
                 info.executable,
                 f"--user-data-dir={profile_dir}",
-                f"--proxy-server={proxy_arg}",
+                f"--proxy-server=http://127.0.0.1:{self._proxy_port}",
+                "--proxy-bypass-list=<-loopback>",
                 f"--remote-debugging-port={remote_debugging_port}",
                 "--no-first-run",
                 "--no-default-browser-check",
                 "--disable-extensions",
                 "--disable-sync",
-                "--disable-background-networking",
                 "--safebrowsing-disable-auto-update",
                 "--ignore-certificate-errors",
+                "--disable-background-timer-throttling",
+                "--disable-renderer-backgrounding",
             ]
             if target_url:
                 cmd.append(target_url)
@@ -238,9 +240,22 @@ class BrowserManager:
                 "--start-debugger-server",
                 str(remote_debugging_port),
             ]
-            # Firefox proxy config via env
-            os.environ["http_proxy"] = f"http://{proxy_arg}"
-            os.environ["https_proxy"] = f"http://{proxy_arg}"
+            # Write Firefox proxy preferences to user.js in the profile dir
+            proxy_host = "127.0.0.1"
+            proxy_port = self._proxy_port
+            user_js = profile_dir / "user.js"
+            user_js.write_text(
+                f'user_pref("network.proxy.type", 1);\n'
+                f'user_pref("network.proxy.http", "{proxy_host}");\n'
+                f'user_pref("network.proxy.http_port", {proxy_port});\n'
+                f'user_pref("network.proxy.ssl", "{proxy_host}");\n'
+                f'user_pref("network.proxy.ssl_port", {proxy_port});\n'
+                f'user_pref("network.proxy.no_proxies_on", "localhost,127.0.0.1");\n'
+            )
+            # Scope proxy env vars to the subprocess only (don't pollute os.environ)
+            firefox_env = os.environ.copy()
+            firefox_env["http_proxy"] = f"http://{proxy_host}:{proxy_port}"
+            firefox_env["https_proxy"] = f"http://{proxy_host}:{proxy_port}"
             if target_url:
                 cmd.append(target_url)
 
@@ -255,6 +270,7 @@ class BrowserManager:
             cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            env=firefox_env,
         )
 
     # ------------------------------------------------------------------
