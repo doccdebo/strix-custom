@@ -304,4 +304,10 @@ class AgentCoordinator:
 
 def coordinator_from_context(ctx: dict[str, Any]) -> AgentCoordinator | None:
     coordinator = ctx.get("coordinator")
-    return coordinator if isinstance(coordinator, AgentCoordinator) else None
+    if not isinstance(coordinator, AgentCoordinator):
+        logger.debug(
+            "coordinator_from_context: no AgentCoordinator in context (got %s)",
+            type(coordinator).__name__,
+        )
+        return None
+    return coordinator

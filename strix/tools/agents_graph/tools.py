@@ -23,7 +23,22 @@ logger = logging.getLogger(__name__)
 
 
 def _ctx(ctx: RunContextWrapper) -> dict[str, Any]:
-    return ctx.context if isinstance(ctx.context, dict) else {}
+    c = ctx.context
+    if isinstance(c, dict):
+        return c
+    # Some SDK versions wrap context in a model/dataclass — unwrap it
+    unwrapped = getattr(c, "__dict__", None)
+    if isinstance(unwrapped, dict):
+        logger.warning(
+            "_ctx: ctx.context is %s (not dict), unwrapping via __dict__",
+            type(c).__name__,
+        )
+        return unwrapped
+    logger.error(
+        "_ctx: ctx.context is %s — cannot extract context dict; agent tools will fail",
+        type(c).__name__,
+    )
+    return {}
 
 
 def _render_completion_report(
@@ -404,12 +419,21 @@ async def create_agent(
     spawner = inner.get("spawn_child_agent")
 
     if coordinator is None or parent_id is None:
+        logger.error(
+            "create_agent: coordinator or agent_id missing in context (coordinator=%s, agent_id=%s)",
+            coordinator,
+            parent_id,
+        )
         return json.dumps(
             {"success": False, "error": "Agent coordinator or agent_id missing in context"},
             ensure_ascii=False,
             default=str,
         )
     if not callable(spawner):
+        logger.error(
+            "create_agent: spawn_child_agent not found in context (spawner=%r)",
+            spawner,
+        )
         return json.dumps(
             {
                 "success": False,
