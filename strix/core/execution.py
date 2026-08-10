@@ -125,6 +125,7 @@ async def spawn_child_agent(
     task: str,
     skills: list[str],
     parent_history: list[Any],
+    max_workers: int = 0,
     event_sink: StreamEventSink | None = None,
     hooks: RunHooks[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -142,36 +143,72 @@ async def spawn_child_agent(
         skills=skills,
     )
 
-    await _start_child_runner(
-        parent_ctx=parent_ctx,
-        coordinator=coordinator,
-        agents_db_path=agents_db_path,
-        sessions_to_close=sessions_to_close,
-        run_config=run_config,
-        max_turns=max_turns,
-        interactive=interactive,
-        child_agent=child_agent,
-        child_id=child_id,
+    sequential = max_workers == 1
+    initial = child_initial_input(
         name=name,
+        child_id=child_id,
         parent_id=parent_id,
         task=task,
-        initial_input=child_initial_input(
-            name=name,
+        parent_history=parent_history,
+    )
+
+    if sequential:
+        # Run the child agent in-line (no asyncio.create_task) to prevent
+        # context duplication and reduce peak RAM on local hardware.
+        logger.debug(
+            "spawn_child_agent: max_workers=1 — running '%s' (%s) sequentially",
+            name,
+            child_id,
+        )
+        session = open_agent_session(child_id, agents_db_path)
+        sessions_to_close.append(session)
+        await coordinator.attach_runtime(child_id, session=session)
+
+        child_ctx: dict[str, Any] = dict(parent_ctx)
+        child_ctx["agent_id"] = child_id
+        child_ctx["parent_id"] = parent_id
+        child_ctx["task"] = task
+
+        await run_agent_loop(
+            agent=child_agent,
+            initial_input=initial,
+            run_config=run_config,
+            context=child_ctx,
+            max_turns=max_turns,
+            coordinator=coordinator,
+            agent_id=child_id,
+            interactive=interactive,
+            session=session,
+            event_sink=event_sink,
+            hooks=hooks,
+        )
+        mode_msg = "ran sequentially (max_workers=1)"
+    else:
+        await _start_child_runner(
+            parent_ctx=parent_ctx,
+            coordinator=coordinator,
+            agents_db_path=agents_db_path,
+            sessions_to_close=sessions_to_close,
+            run_config=run_config,
+            max_turns=max_turns,
+            interactive=interactive,
+            child_agent=child_agent,
             child_id=child_id,
+            name=name,
             parent_id=parent_id,
             task=task,
-            parent_history=parent_history,
-        ),
-        event_sink=event_sink,
-        hooks=hooks,
-    )
+            initial_input=initial,
+            event_sink=event_sink,
+            hooks=hooks,
+        )
+        mode_msg = "running in parallel"
 
     return {
         "success": True,
         "agent_id": child_id,
         "name": name,
         "parent_id": parent_id,
-        "message": f"Spawned '{name}' ({child_id}) running in parallel.",
+        "message": f"Spawned '{name}' ({child_id}) {mode_msg}.",
     }
 
 
