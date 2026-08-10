@@ -19,6 +19,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+LLM_TURN_KEY = "llm_turn"
+
+
 class ReportUsageHooks(RunHooks[dict[str, Any]]):
     """Persist SDK-native usage after every model response."""
 
