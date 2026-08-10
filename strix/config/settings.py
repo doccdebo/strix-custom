@@ -80,6 +80,17 @@ class SecuritySettings(BaseSettings):
     private_mode: bool = Field(default=True, alias="STRIX_PRIVATE_MODE")
 
 
+class BudgetSettings(BaseSettings):
+    """Cost-reduction and local-execution controls."""
+
+    model_config = _BASE_CONFIG
+
+    max_workers: int = Field(default=1, alias="STRIX_MAX_WORKERS")
+    enable_local_mode: bool = Field(default=False, alias="STRIX_ENABLE_LOCAL_MODE")
+    smart_truncate: bool = Field(default=True, alias="STRIX_SMART_TRUNCATE")
+    escalation_endpoint: str | None = Field(default=None, alias="STRIX_ESCALATION_ENDPOINT")
+
+
 class Settings(BaseSettings):
     model_config = _BASE_CONFIG
 
@@ -89,3 +100,4 @@ class Settings(BaseSettings):
     integrations: IntegrationSettings = Field(default_factory=IntegrationSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     mobsf: MobSFSettings = Field(default_factory=MobSFSettings)
+    budget: BudgetSettings = Field(default_factory=BudgetSettings)
