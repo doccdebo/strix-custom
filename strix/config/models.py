@@ -65,12 +65,14 @@ def configure_sdk_model_defaults(settings: Settings) -> None:
     llm = settings.llm
     _enforce_private_llm_defaults(settings)
     _configure_litellm_compatibility()
+    api_base = (llm.api_base or "").strip()
     if llm.api_key:
         set_default_openai_key(llm.api_key, use_for_tracing=False)
         _configure_litellm_default("api_key", llm.api_key)
-    if llm.api_base:
-        os.environ["OPENAI_BASE_URL"] = llm.api_base
-        _configure_litellm_default("api_base", llm.api_base)
+    if api_base:
+        os.environ["OPENAI_BASE_URL"] = api_base
+        _configure_litellm_default("api_base", api_base)
+        logger.info("Configured custom OpenAI-compatible api_base: %s", api_base)
         set_default_openai_api("chat_completions")
     else:
         set_default_openai_api("responses")
