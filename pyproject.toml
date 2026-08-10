@@ -228,10 +228,6 @@ ignore = [
 "strix/interface/tui/app.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915", "SIM105"]
 "strix/interface/main.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
 "strix/interface/tui/renderers/agent_message_renderer.py" = ["PLC0415"]
-# Mobile pipeline catches broad exceptions for resilience
-"strix/mobile/pipeline.py" = ["BLE001"]
-# Tests: allow assert statements, S rules, and broad exception tests
-"tests/**/*.py" = ["S", "ANN", "D"]
 
 [tool.ruff.lint.isort]
 force-single-line = false

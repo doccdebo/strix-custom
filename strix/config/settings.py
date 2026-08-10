@@ -56,14 +56,6 @@ class TelemetrySettings(BaseSettings):
     enabled: bool = Field(default=False, alias="STRIX_TELEMETRY")
 
 
-class MobSFSettings(BaseSettings):
-    model_config = _BASE_CONFIG
-
-    url: str = Field(default="http://localhost:8000", alias="MOBSF_URL")
-    api_key: str = Field(default="", alias="MOBSF_API_KEY")
-    timeout: int = Field(default=120, alias="MOBSF_TIMEOUT")
-
-
 class IntegrationSettings(BaseSettings):
     model_config = _BASE_CONFIG
 
@@ -88,4 +80,3 @@ class Settings(BaseSettings):
     telemetry: TelemetrySettings = Field(default_factory=TelemetrySettings)
     integrations: IntegrationSettings = Field(default_factory=IntegrationSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
-    mobsf: MobSFSettings = Field(default_factory=MobSFSettings)
