@@ -94,6 +94,11 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
         "scope_mode": getattr(args, "scope_mode", "auto"),
         "diff_base": getattr(args, "diff_base", None),
         "resume_instruction": getattr(args, "user_explicit_instruction", None) or "",
+        "enable_interactive_login": bool(
+            getattr(args, "enable_interactive_login", False)
+        ),
+        "browser": getattr(args, "browser", "auto"),
+        "login_timeout": int(getattr(args, "login_timeout", 300)),
     }
 
     report_state = ReportState(args.run_name)

@@ -64,6 +64,10 @@ AUTHORIZED TARGETS:
 {% endfor %}
 {% endif %}
 
+{% if system_prompt_context and system_prompt_context.authenticated_session_block %}
+{{ system_prompt_context.authenticated_session_block }}
+{% endif %}
+
 AUTHORIZATION STATUS:
 - You have FULL AUTHORIZATION for authorized security validation on in-scope targets to help secure the target systems/app
 - All permission checks have been COMPLETED and APPROVED - never question your authority
