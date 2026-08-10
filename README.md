@@ -68,16 +68,6 @@ Strix are autonomous AI agents that act just like real hackers - they run your c
 - **Bug Bounty Automation** - Automate bug bounty research and generate PoCs for faster reporting
 - **CI/CD Integration** - Run tests in CI/CD to block vulnerabilities before reaching production
 
-## 📱 Mobile Security Testing
-
-Strix integrates with [MobSF](https://github.com/MobSF/Mobile-Security-Framework-MobSF) to statically analyse Android APK and iOS IPA binaries, then automatically inject discovered backend API endpoints into the scanning pipeline.
-
-```bash
-strix --target-apk ./app-release.apk --target https://api.myapp.com
-```
-
-See [docs/mobile-security.md](docs/mobile-security.md) for setup instructions, required environment variables (`MOBSF_URL`, `MOBSF_API_KEY`), and troubleshooting guidance.
-
 ## 🚀 Quick Start
 
 **Prerequisites:**

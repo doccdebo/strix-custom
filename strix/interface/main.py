@@ -315,9 +315,6 @@ Examples:
   # Custom instructions (from file)
   strix --target example.com --instruction-file ./instructions.txt
   strix --target https://app.com --instruction-file /path/to/detailed_instructions.md
-
-  # Mobile APK analysis + backend scanning
-  strix --target-apk ./app-release.apk --target https://api.myapp.com
         """,
     )
 
@@ -400,17 +397,6 @@ Examples:
         help=(
             "Target branch or commit to compare against (e.g., origin/main). "
             "Defaults to the repository's default branch."
-        ),
-    )
-
-    parser.add_argument(
-        "--target-apk",
-        type=str,
-        metavar="PATH",
-        help=(
-            "Path to an Android APK or iOS IPA binary to analyse with MobSF before "
-            "scanning discovered backend endpoints. Requires MOBSF_URL and MOBSF_API_KEY "
-            "to be configured."
         ),
     )
 
@@ -709,32 +695,6 @@ def main() -> None:
                 target_info["details"]["cloned_repo_path"] = cloned_path
 
         args.local_sources = collect_local_sources(args.targets_info)
-
-        if getattr(args, "target_apk", None):
-            from strix.mobile.pipeline import run_mobile_pipeline  # noqa: PLC0415
-
-            binary_path = Path(args.target_apk)
-            if not binary_path.exists():
-                console = Console()
-                console.print(f"[bold red]Error:[/] APK/IPA file not found: {binary_path}")
-                sys.exit(1)
-            settings = load_settings()
-            if not settings.mobsf.api_key:
-                console = Console()
-                console.print(
-                    "[bold red]Error:[/] MOBSF_API_KEY is not set. "
-                    "Configure your MobSF instance and set MOBSF_API_KEY."
-                )
-                sys.exit(1)
-            args.targets_info = asyncio.run(
-                run_mobile_pipeline(
-                    binary_path=binary_path,
-                    mobsf_url=settings.mobsf.url,
-                    mobsf_api_key=settings.mobsf.api_key,
-                    scan_config={"targets": args.targets_info},
-                )
-            )["targets"]
-
         try:
             diff_scope = resolve_diff_scope_context(
                 local_sources=args.local_sources,
