@@ -133,6 +133,35 @@ def _configure_litellm_compatibility() -> None:
 
     litellm.drop_params = True
     litellm.modify_params = True
+    _patch_usage_none_tolerance()
+
+
+def _patch_usage_none_tolerance() -> None:
+    """Patch agents.usage.Usage to tolerate None token counts.
+
+    Some LLM providers omit usage fields from their responses, causing
+    openai-agents to pass None into Usage(input_tokens=None, ...). The
+    pydantic int validator then raises a ValidationError, which surfaces
+    as an LLM connection failure. This patch coerces None to 0 for the
+    four integer counter fields before pydantic validates them.
+    """
+    from agents.usage import Usage
+
+    _orig_init = Usage.__init__
+
+    if getattr(_orig_init, "_strix_patched", False):
+        return
+
+    _INT_FIELDS = frozenset({"requests", "input_tokens", "output_tokens", "total_tokens"})
+
+    def _patched_init(self: Usage, *args: object, **kwargs: object) -> None:
+        for field in _INT_FIELDS:
+            if field in kwargs and kwargs[field] is None:
+                kwargs[field] = 0
+        _orig_init(self, *args, **kwargs)
+
+    _patched_init._strix_patched = True  # type: ignore[attr-defined]
+    Usage.__init__ = _patched_init  # type: ignore[method-assign]
 
 
 def _configure_litellm_default(name: str, value: str) -> None:
