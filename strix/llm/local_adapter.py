@@ -58,18 +58,12 @@ def is_local_endpoint(settings: Settings) -> bool:
     Detection logic (first match wins):
     1. ``STRIX_ENABLE_LOCAL_MODE=1`` env var / config flag.
     2. Model name starts with a known local prefix (``ollama/``, ``vllm/`` …).
-    3. ``api_base`` points to localhost / 127.x / host.docker.internal.
     """
     if getattr(getattr(settings, "budget", None), "enable_local_mode", False):
         return True
 
     model = (settings.llm.model or "").strip().lower()
-    if any(model.startswith(p) for p in _LOCAL_MODEL_PREFIXES):
-        return True
-
-    api_base = (settings.llm.api_base or "").lower()
-    _local_hosts = ("localhost", "127.0.", "::1", "host.docker.internal", "0.0.0.0")
-    return any(host in api_base for host in _local_hosts)
+    return any(model.startswith(p) for p in _LOCAL_MODEL_PREFIXES)
 
 
 def apply_local_mode_overrides(settings: Settings) -> None:
@@ -87,6 +81,11 @@ def apply_local_mode_overrides(settings: Settings) -> None:
         settings: The loaded :class:`~strix.config.settings.Settings` instance.
     """
     if not is_local_endpoint(settings):
+        if settings.llm.api_base:
+            logger.debug(
+                "local_adapter: remote/custom api_base configured (%s); skipping local-mode overrides",
+                settings.llm.api_base,
+            )
         return
 
     logger.info(

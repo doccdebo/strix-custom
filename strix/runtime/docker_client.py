@@ -52,9 +52,14 @@ class StrixDockerSandboxClient(DockerSandboxClient):
     ) -> Container:
         # ----- BEGIN VERBATIM COPY of DockerSandboxClient._create_container -----
         # SDK ref: src/agents/sandbox/sandboxes/docker.py:1434-1477 (v0.14.6).
-        if not self.image_exists(image):
+        image_present = self.image_exists(image)
+        if image_present:
+            logger.info("Sandbox image %s already present locally, skipping pull", image)
+        else:
+            logger.info("Sandbox image %s not found locally, pulling now", image)
             repo, tag = parse_repository_tag(image)
             self.docker_client.images.pull(repo, tag=tag or None, all_tags=False)
+            logger.info("Sandbox image pulled successfully: %s", image)
 
         assert self.image_exists(image)
         environment: dict[str, str] | None = None
