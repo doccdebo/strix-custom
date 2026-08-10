@@ -431,6 +431,33 @@ Examples:
         ),
     )
 
+    parser.add_argument(
+        "--enable-interactive-login",
+        action="store_true",
+        help=(
+            "Launch a managed browser for manual authentication. "
+            "Strix will pause and wait for you to log in, then resume testing "
+            "with the authenticated session. Optional; for automated credential testing, "
+            "use --instruction instead."
+        ),
+    )
+
+    parser.add_argument(
+        "--browser",
+        type=str,
+        choices=["auto", "chrome", "firefox", "edge", "safari"],
+        default="auto",
+        help="Browser to launch for interactive login (default: auto-detect).",
+    )
+
+    parser.add_argument(
+        "--login-timeout",
+        type=int,
+        default=300,
+        metavar="SECONDS",
+        help="Maximum time to wait for authenticated session (default: 300s / 5 minutes).",
+    )
+
     args = parser.parse_args()
 
     if args.instruction and args.instruction_file:
